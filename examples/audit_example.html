@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Nzox Security Audit — Exemple anonymisé</title>
+<style>
+  body { font-family: 'Segoe UI', monospace; background: #0a0a0f; color: #e8e8f0; margin: 0; padding: 2rem; }
+  .header { border-bottom: 2px solid #6c63ff; padding-bottom: 1rem; margin-bottom: 2rem; }
+  h1 { font-size: 1.8rem; color: #6c63ff; }
+  .meta { color: #9090a8; font-size: 0.85rem; margin-top: 0.3rem; }
+  .notice { background: #1a1a2e; border: 1px solid #6c63ff; border-radius: 8px; padding: 0.8rem 1.2rem; margin-bottom: 2rem; font-size: 0.82rem; color: #9090a8; }
+  .summary { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .chip { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.8rem; border: 1px solid; }
+  .chip.ok { border-color: #00d4aa; color: #00d4aa; }
+  .chip.warn { border-color: #ff6b6b; color: #ff6b6b; }
+  .card { background: #141420; border: 1px solid #2a2a40; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .card.warn { border-color: rgba(255,107,107,0.4); }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  h2 { font-size: 1rem; color: #e8e8f0; margin: 0; }
+  .badge { font-size: 0.8rem; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { margin: 0.3rem 0; }
+  code { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.82rem; color: #9090a8; white-space: pre-wrap; }
+  footer { text-align: center; color: #9090a8; font-size: 0.8rem; margin-top: 3rem; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🔐 Nzox Security Audit Tool</h1>
+  <p class="meta">Rapport généré le 2026-06-14 20:37:02 — Machine : DESKTOP-EXEMPLE</p>
+</div>
+
+<div class="notice">
+  ℹ️ <strong>Rapport anonymisé</strong> — Cet exemple illustre le format de sortie de l'outil.
+  Les données système, noms de processus, adresses IP et ports sont fictifs ou génériques.
+  Un rapport réel contient les informations de votre propre machine.
+</div>
+
+<div class="summary">
+  <div class="chip ok">✅ 6 sections OK</div>
+  <div class="chip warn">⚠️ 2 points à vérifier</div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>Informations système</h2>
+    <span class="badge" style="color:#00d4aa">✅ OK</span>
+  </div>
+  <ul>
+    <li><code>OS : Windows 11 Home (10.0.22621)</code></li>
+    <li><code>Nom machine : DESKTOP-EXEMPLE</code></li>
+    <li><code>Architecture : AMD64</code></li>
+    <li><code>Python : 3.11.4</code></li>
+    <li><code>Heure audit : 2026-06-14 20:37:02</code></li>
+  </ul>
+</div>
+
+<div class="card warn">
+  <div class="card-header">
+    <h2>Espace disque</h2>
+    <span class="badge" style="color:#ff6b6b">⚠️ Attention</span>
+  </div>
+  <ul>
+    <li><code>✅ C:\ — 87.3 Go / 237.1 Go (36.8%)</code></li>
+    <li><code>⚠️ Attention D:\ — 178.4 Go / 238.5 Go (74.8%)</code></li>
+    <li><code>✅ E:\ — 12.1 Go / 465.8 Go (2.6%)</code></li>
+  </ul>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>Processus les plus lourds (CPU + RAM)</h2>
+    <span class="badge" style="color:#00d4aa">✅ OK</span>
+  </div>
+  <ul>
+    <li><code>  PID   1234 | chrome.exe                     | CPU   3.2% | RAM   512.4 Mo</code></li>
+    <li><code>  PID   5678 | Code.exe                       | CPU   1.8% | RAM   387.1 Mo</code></li>
+    <li><code>  PID   9012 | MsMpEng.exe                    | CPU   0.9% | RAM   201.7 Mo</code></li>
+    <li><code>  PID   3456 | python.exe                     | CPU   0.4% | RAM   148.3 Mo</code></li>
+    <li><code>  PID   7890 | explorer.exe                   | CPU   0.2% | RAM   112.8 Mo</code></li>
+    <li><code>  PID   2345 | svchost.exe                    | CPU   0.1% | RAM   98.2 Mo</code></li>
+    <li><code>  PID   6789 | Discord.exe                    | CPU   0.1% | RAM   87.5 Mo</code></li>
+    <li><code>  PID   1011 | SearchIndexer.exe              | CPU   0.0% | RAM  64.1 Mo</code></li>
+    <li><code>  PID   1213 | OneDrive.exe                   | CPU   0.0% | RAM   58.6 Mo</code></li>
+    <li><code>  PID   1415 | RuntimeBroker.exe              | CPU   0.0% | RAM   42.3 Mo</code></li>
+  </ul>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>Programmes au démarrage (registre)</h2>
+    <span class="badge" style="color:#00d4aa">✅ OK</span>
+  </div>
+  <ul>
+    <li><code>  [HKLM] SecurityHealth → %windir%\system32\SecurityHealthSystray.exe</code></li>
+    <li><code>  [HKCU] OneDrive → C:\Users\utilisateur\AppData\Local\Microsoft\OneDrive\OneDrive.exe</code></li>
+    <li><code>  [HKCU] Discord → C:\Users\utilisateur\AppData\Local\Discord\Update.exe --processStart Discord.exe</code></li>
+  </ul>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>Ports réseau ouverts (écoute locale)</h2>
+    <span class="badge" style="color:#00d4aa">✅ OK</span>
+  </div>
+  <ul>
+    <li><code>  Port   135 | 0.0.0.0:135            | svchost.exe (PID 832)</code></li>
+    <li><code>  Port   445 | 0.0.0.0:445            | System (PID 4)</code></li>
+    <li><code>  Port  1900 | 0.0.0.0:1900           | svchost.exe (PID 2340)</code></li>
+    <li><code>  Port  5040 | 0.0.0.0:5040           | svchost.exe (PID 1876)</code></li>
+    <li><code>  Port  8080 | 127.0.0.1:8080         | python.exe (PID 3456)</code></li>
+  </ul>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>Windows Defender / Antivirus</h2>
+    <span class="badge" style="color:#00d4aa">✅ OK</span>
+  </div>
+  <ul>
+    <li><code>  Service AM actif       : ✅ Oui</code></li>
+    <li><code>  Protection temps réel  : ✅ Oui</code></li>
+    <li><code>  Antivirus actif        : ✅ Oui</code></li>
+  </ul>
+</div>
+
+<div class="card warn">
+  <div class="card-header">
+    <h2>Mises à jour Windows (dernière vérification)</h2>
+    <span class="badge" style="color:#ff6b6b">⚠️ Attention</span>
+  </div>
+  <ul>
+    <li><code>  Dernière recherche MAJ : 2026-05-28T09:14:33Z</code></li>
+    <li><code>  ℹ️ Dernière vérification il y a plus de 14 jours — vérifier manuellement dans Paramètres > Windows Update</code></li>
+  </ul>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>Interfaces réseau actives</h2>
+    <span class="badge" style="color:#00d4aa">✅ OK</span>
+  </div>
+  <ul>
+    <li><code>  ✅ Ethernet                        | 192.168.1.42</code></li>
+    <li><code>  ✅ Wi-Fi                            | 192.168.1.43</code></li>
+    <li><code>  ✅ Loopback Pseudo-Interface 1      | 127.0.0.1</code></li>
+  </ul>
+</div>
+
+<footer>Nzox Security Audit Tool — Usage défensif et éducatif uniquement — github.com/Nzox973</footer>
+</body>
+</html>
