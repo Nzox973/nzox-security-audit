@@ -1,11 +1,24 @@
-# 🔐 Nzox Security Audit Tool
+# Nzox Security Audit Tool
 
-Outil d'audit Windows défensif en Python.  
-Analyse l'état de sécurité du PC et génère un rapport HTML clair.
+Outil d'audit Windows défensif en Python.
+Analyse l'état de sécurité du PC et génère un rapport HTML.
 
-**Auteur** : Enzo ATTICOT  
-**Contexte** : Projet portfolio — Terminale NSI / BUT Informatique  
-**Objectif** : Cybersécurité défensive, Python, Windows internals
+**Auteur :** Enzo ATTICOT ([@Nzox973](https://github.com/Nzox973))
+**Contexte :** Projet portfolio — Terminale NSI
+**Licence :** MIT
+
+> **Usage éthique :** cet outil est conçu pour auditer **votre propre machine**. Toute utilisation sur un système sans autorisation explicite est illégale. Aucune donnée n'est envoyée à l'extérieur.
+
+---
+
+## Ce que ce projet démontre
+
+- Utilisation de `psutil` pour interroger les ressources système (processus, réseau, disque)
+- Appels `subprocess` vers le registre Windows et PowerShell
+- Génération de rapport HTML stylisé en Python pur
+- Gestion des erreurs et des droits d'accès limités
+- Séparation claire données locales / données publiées (`.gitignore` sur `reports/`)
+- Adaptation aux contraintes d'encodage Windows (UTF-8 vs cp1252)
 
 ---
 
@@ -14,9 +27,9 @@ Analyse l'état de sécurité du PC et génère un rapport HTML clair.
 | Vérification | Description |
 |---|---|
 | Informations système | OS, version, architecture |
-| Espace disque | Utilisation de chaque partition, alertes si > 75% |
+| Espace disque | Utilisation par partition, alerte si > 75% |
 | Processus lourds | Top 10 par RAM (CPU + mémoire) |
-| Démarrage | Programmes enregistrés au démarrage (registre) |
+| Démarrage | Programmes au démarrage via registre Windows |
 | Ports ouverts | Ports en écoute + processus associés |
 | Windows Defender | État protection temps réel et antivirus |
 | Mises à jour | Date de dernière vérification Windows Update |
@@ -30,6 +43,8 @@ Analyse l'état de sécurité du PC et génère un rapport HTML clair.
 pip install psutil
 ```
 
+Python 3.9+ requis.
+
 ---
 
 ## Utilisation
@@ -38,24 +53,21 @@ pip install psutil
 # Rapport HTML (défaut)
 python audit.py
 
-# Rapport HTML explicite
-python audit.py --html
-
 # Rapport Markdown
 python audit.py --md
 
-# Les deux
+# Les deux formats
 python audit.py --html --md
 ```
 
-Les rapports sont sauvegardés dans `reports/audit_YYYYMMDD_HHMMSS.html`.
+Les rapports sont sauvegardés dans `reports/` (exclu de git — ne jamais publier un rapport réel).
 
 ---
 
-## Exemple de sortie
+## Exemple de sortie console
 
 ```
-🔐 Nzox Security Audit Tool — démarrage...
+[NZOX] Security Audit Tool -- demarrage...
 
   → System Info...
   → Disk Space...
@@ -66,42 +78,57 @@ Les rapports sont sauvegardés dans `reports/audit_YYYYMMDD_HHMMSS.html`.
   → Windows Updates...
   → Network Interfaces...
 
+[OK] Rapport HTML -> reports/audit_20260614_203702.html
+
 ==================================================
-Audit terminé — 1 point(s) à vérifier sur 8 sections.
-Rapport sauvegardé dans : reports/
+Audit termine -- 0 point(s) a verifier sur 8 sections.
 ==================================================
 ```
 
 ---
 
-## Sécurité & Éthique
+## Limitations
 
-- **100% défensif** — aucune modification système
-- **Aucune donnée envoyée** — tout reste local
-- **Aucun mot de passe, token ou donnée privée** récupérés
-- **Usage légal** — audit de son propre PC uniquement
-- Ne pas utiliser sur des systèmes sans autorisation
+- Windows uniquement (utilise le registre et PowerShell)
+- Certaines vérifications nécessitent des droits administrateur
+- Les ports réseau ne sont pas tous visibles sans admin
+- Aucune détection de malware — ce n'est pas un antivirus
+- Ne surveille pas en temps réel — c'est un snapshot ponctuel
+- Ne couvre pas Linux, macOS ou les environnements cloud
+
+---
+
+## Améliorations futures
+
+- [ ] Comparaison entre deux audits (diff avant/après)
+- [ ] Détection de logiciels obsolètes (version vs dernière connue)
+- [ ] Mode planifié / cron Windows
+- [ ] Export PDF
+- [ ] Vérification des permissions sur fichiers sensibles
+- [ ] Support Linux (bases)
 
 ---
 
 ## Stack technique
 
-- Python 3.10+
-- psutil — informations système et processus
-- subprocess — registre Windows et PowerShell
-- socket — réseau
-- JSON + HTML — génération de rapport
+| Technologie | Usage |
+|---|---|
+| Python 3.9+ | Langage principal |
+| psutil | Processus, réseau, disque |
+| subprocess | Registre Windows, PowerShell |
+| json | Parsing des résultats PowerShell |
+| HTML/CSS inline | Génération du rapport |
 
 ---
 
-## Roadmap
+## Sécurité
 
-- [ ] Export PDF
-- [ ] Comparaison entre deux audits (diff)
-- [ ] Détection de logiciels obsolètes
-- [ ] Vérification des permissions de fichiers sensibles
-- [ ] Mode silencieux (cron/planification)
+- Aucune donnée envoyée à l'extérieur
+- Aucun fichier modifié ou supprimé
+- Aucun mot de passe, token ou donnée privée collecté
+- Les rapports générés (dans `reports/`) sont exclus du dépôt Git
+- Usage légal uniquement : audit de sa propre machine
 
 ---
 
-*Projet éducatif — Portfolio Enzo ATTICOT*
+*Projet éducatif — Enzo ATTICOT — github.com/Nzox973*

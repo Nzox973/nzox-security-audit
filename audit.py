@@ -7,7 +7,6 @@ Usage : python audit.py [--html] [--md]
 import os
 import sys
 import json
-import socket
 import datetime
 import platform
 import subprocess
