@@ -3,9 +3,9 @@
 Outil d'audit Windows défensif en Python.
 Analyse l'état de sécurité du PC et génère un rapport HTML.
 
-**Auteur :** Enzo ATTICOT ([@Nzox973](https://github.com/Nzox973))
-**Contexte :** Projet portfolio — Terminale NSI
-**Licence :** MIT
+- **Auteur :** Enzo ATTICOT ([@Nzox973](https://github.com/Nzox973))
+- **Contexte :** projet personnel présenté dans le portfolio 2026
+- **Licence :** MIT
 
 > **Usage éthique :** cet outil est conçu pour auditer **votre propre machine**. Toute utilisation sur un système sans autorisation explicite est illégale. Aucune donnée n'est envoyée à l'extérieur.
 
