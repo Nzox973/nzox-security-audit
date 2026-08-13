@@ -20,4 +20,4 @@ jobs:
       - name: Lint
         run: ruff check audit.py tests
       - name: Test
-        run: pytest -q
+        run: python -m pytest -q

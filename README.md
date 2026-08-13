@@ -83,7 +83,7 @@ Certaines observations, notamment les connexions réseau ou l'état Defender, pe
 ```bash
 pip install -r requirements-dev.txt
 ruff check audit.py tests
-pytest -q
+python -m pytest -q
 ```
 
 La CI Windows vérifie l'échappement HTML, la neutralisation Markdown et l'absence du nom de machine dans le rapport par défaut.
