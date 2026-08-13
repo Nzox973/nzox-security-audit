@@ -18,6 +18,8 @@
   .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
   h2 { font-size: 1rem; color: #e8e8f0; margin: 0; }
   .badge { font-size: 0.8rem; }
+  .badge.ok { color: #00d4aa; }
+  .badge.warn { color: #ff6b6b; }
   ul { list-style: none; padding: 0; margin: 0; }
   li { margin: 0.3rem 0; }
   code { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.82rem; color: #9090a8; white-space: pre-wrap; }
@@ -27,13 +29,13 @@
 <body>
 <div class="header">
   <h1>🔐 Nzox Security Audit Tool</h1>
-  <p class="meta">Rapport généré le 2026-06-14 20:37:02 — Machine : DESKTOP-EXEMPLE</p>
+  <p class="meta">Rapport généré le 2026-06-14 20:37:02 — Mode détaillé fictif</p>
 </div>
 
 <div class="notice">
-  ℹ️ <strong>Rapport anonymisé</strong> — Cet exemple illustre le format de sortie de l'outil.
-  Les données système, noms de processus, adresses IP et ports sont fictifs ou génériques.
-  Un rapport réel contient les informations de votre propre machine.
+  ℹ️ <strong>Rapport fictif en mode <code>--details</code></strong> — Les noms,
+  PID, commandes, adresses IP et ports sont inventés. Le mode normal de l’outil
+  masque ces valeurs et doit être préféré pour réduire l’exposition.
 </div>
 
 <div class="summary">
@@ -44,7 +46,7 @@
 <div class="card">
   <div class="card-header">
     <h2>Informations système</h2>
-    <span class="badge" style="color:#00d4aa">✅ OK</span>
+    <span class="badge ok">✅ OK</span>
   </div>
   <ul>
     <li><code>OS : Windows 11 Home (10.0.22621)</code></li>
@@ -58,7 +60,7 @@
 <div class="card warn">
   <div class="card-header">
     <h2>Espace disque</h2>
-    <span class="badge" style="color:#ff6b6b">⚠️ Attention</span>
+    <span class="badge warn">⚠️ Attention</span>
   </div>
   <ul>
     <li><code>✅ C:\ — 87.3 Go / 237.1 Go (36.8%)</code></li>
@@ -70,7 +72,7 @@
 <div class="card">
   <div class="card-header">
     <h2>Processus les plus lourds (CPU + RAM)</h2>
-    <span class="badge" style="color:#00d4aa">✅ OK</span>
+    <span class="badge ok">✅ OK</span>
   </div>
   <ul>
     <li><code>  PID   1234 | chrome.exe                     | CPU   3.2% | RAM   512.4 Mo</code></li>
@@ -89,7 +91,7 @@
 <div class="card">
   <div class="card-header">
     <h2>Programmes au démarrage (registre)</h2>
-    <span class="badge" style="color:#00d4aa">✅ OK</span>
+    <span class="badge ok">✅ OK</span>
   </div>
   <ul>
     <li><code>  [HKLM] SecurityHealth → %windir%\system32\SecurityHealthSystray.exe</code></li>
@@ -101,7 +103,7 @@
 <div class="card">
   <div class="card-header">
     <h2>Ports réseau ouverts (écoute locale)</h2>
-    <span class="badge" style="color:#00d4aa">✅ OK</span>
+    <span class="badge ok">✅ OK</span>
   </div>
   <ul>
     <li><code>  Port   135 | 0.0.0.0:135            | svchost.exe (PID 832)</code></li>
@@ -115,7 +117,7 @@
 <div class="card">
   <div class="card-header">
     <h2>Windows Defender / Antivirus</h2>
-    <span class="badge" style="color:#00d4aa">✅ OK</span>
+    <span class="badge ok">✅ OK</span>
   </div>
   <ul>
     <li><code>  Service AM actif       : ✅ Oui</code></li>
@@ -127,7 +129,7 @@
 <div class="card warn">
   <div class="card-header">
     <h2>Mises à jour Windows (dernière vérification)</h2>
-    <span class="badge" style="color:#ff6b6b">⚠️ Attention</span>
+    <span class="badge warn">⚠️ Attention</span>
   </div>
   <ul>
     <li><code>  Dernière recherche MAJ : 2026-05-28T09:14:33Z</code></li>
@@ -138,7 +140,7 @@
 <div class="card">
   <div class="card-header">
     <h2>Interfaces réseau actives</h2>
-    <span class="badge" style="color:#00d4aa">✅ OK</span>
+    <span class="badge ok">✅ OK</span>
   </div>
   <ul>
     <li><code>  ✅ Ethernet                        | 192.168.1.42</code></li>

@@ -1,15 +1,17 @@
 """
 Nzox Security Audit Tool
 Audit défensif Windows — génère un rapport HTML/Markdown
-Usage : python audit.py [--html] [--md]
+Usage : python audit.py [--html] [--md] [--details]
 """
 
-import os
-import sys
-import json
+import argparse
 import datetime
+import json
+import os
 import platform
 import subprocess
+import sys
+from html import escape
 
 try:
     import psutil
@@ -20,23 +22,29 @@ except ImportError:
 REPORT_DIR = os.path.join(os.path.dirname(__file__), "reports")
 
 
+def now_local() -> datetime.datetime:
+    """Retourne une date consciente du fuseau local."""
+    return datetime.datetime.now(datetime.UTC).astimezone()
+
+
 def section(title: str) -> dict:
     return {"title": title, "items": [], "status": "ok"}
 
 
-def check_system_info() -> dict:
+def check_system_info(*, detailed: bool = False) -> dict:
     s = section("Informations système")
     s["items"] = [
         f"OS : {platform.system()} {platform.release()} ({platform.version()})",
-        f"Nom machine : {platform.node()}",
         f"Architecture : {platform.machine()}",
         f"Python : {platform.python_version()}",
-        f"Heure audit : {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        f"Heure audit : {now_local().strftime('%Y-%m-%d %H:%M:%S %z')}",
     ]
+    if detailed:
+        s["items"].insert(1, f"Nom machine : {platform.node()}")
     return s
 
 
-def check_disk_space() -> dict:
+def check_disk_space(*, detailed: bool = False) -> dict:
     s = section("Espace disque")
     if not HAS_PSUTIL:
         s["items"].append("psutil non disponible — pip install psutil")
@@ -60,7 +68,7 @@ def check_disk_space() -> dict:
     return s
 
 
-def check_top_processes() -> dict:
+def check_top_processes(*, detailed: bool = False) -> dict:
     s = section("Processus les plus lourds (CPU + RAM)")
     if not HAS_PSUTIL:
         s["items"].append("psutil non disponible — pip install psutil")
@@ -78,11 +86,12 @@ def check_top_processes() -> dict:
 
     procs.sort(key=lambda x: x[2], reverse=True)
     for name, cpu, mem, pid in procs[:10]:
-        s["items"].append(f"  PID {pid:6d} | {name:<30} | CPU {cpu:5.1f}% | RAM {mem:7.1f} Mo")
+        prefix = f"PID {pid:6d} | " if detailed else ""
+        s["items"].append(f"  {prefix}{name:<30} | CPU {cpu:5.1f}% | RAM {mem:7.1f} Mo")
     return s
 
 
-def check_startup_programs() -> dict:
+def check_startup_programs(*, detailed: bool = False) -> dict:
     s = section("Programmes au démarrage (registre)")
     keys = [
         r"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
@@ -93,15 +102,18 @@ def check_startup_programs() -> dict:
         try:
             result = subprocess.run(
                 ["reg", "query", key],
-                capture_output=True, text=True, timeout=5
+                capture_output=True, text=True, timeout=5, check=False
             )
             if result.returncode == 0:
                 lines = [l.strip() for l in result.stdout.splitlines() if l.strip() and "REG_" in l]
                 for line in lines:
                     parts = line.split(None, 2)
                     if len(parts) >= 3:
-                        found.append(f"  [{key.split(chr(92))[0]}] {parts[0]} → {parts[2][:80]}")
-        except Exception as e:
+                        entry = f"  [{key.split(chr(92))[0]}] {parts[0]}"
+                        if detailed:
+                            entry += f" → {parts[2][:80]}"
+                        found.append(entry)
+        except (OSError, subprocess.SubprocessError) as e:
             s["items"].append(f"Erreur lecture registre : {e}")
 
     if found:
@@ -111,7 +123,7 @@ def check_startup_programs() -> dict:
     return s
 
 
-def check_open_ports() -> dict:
+def check_open_ports(*, detailed: bool = False) -> dict:
     s = section("Ports réseau ouverts (écoute locale)")
     if not HAS_PSUTIL:
         s["items"].append("psutil non disponible — pip install psutil")
@@ -128,30 +140,36 @@ def check_open_ports() -> dict:
                 if pid:
                     try:
                         name = psutil.Process(pid).name()
-                    except Exception:
-                        pass
-                connections.append((conn.laddr.port, addr, name, pid or 0))
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        name = "accès limité"
+                connections.append((conn.laddr.port, addr, conn.laddr.ip, name, pid or 0))
     except psutil.AccessDenied:
         s["items"].append("⛔ Accès refusé — relancer en administrateur pour voir tous les ports")
         s["status"] = "warn"
         return s
 
     connections.sort(key=lambda x: x[0])
-    for port, addr, name, pid in connections:
-        s["items"].append(f"  Port {port:5d} | {addr:<22} | {name} (PID {pid})")
+    for port, addr, ip, name, pid in connections:
+        if detailed:
+            endpoint = addr
+            process = f"{name} (PID {pid})"
+        else:
+            endpoint = "toutes interfaces" if ip in {"0.0.0.0", "::"} else "interface ciblée"
+            process = name
+        s["items"].append(f"  Port {port:5d} | {endpoint:<22} | {process}")
 
     if not connections:
         s["items"].append("Aucun port en écoute détecté.")
     return s
 
 
-def check_defender() -> dict:
+def check_defender(*, detailed: bool = False) -> dict:
     s = section("Windows Defender / Antivirus")
     try:
         result = subprocess.run(
             ["powershell", "-Command",
              "Get-MpComputerStatus | Select-Object -Property AMServiceEnabled,RealTimeProtectionEnabled,AntivirusEnabled | ConvertTo-Json"],
-            capture_output=True, text=True, timeout=10
+            capture_output=True, text=True, timeout=10, check=False
         )
         if result.returncode == 0 and result.stdout.strip():
             data = json.loads(result.stdout)
@@ -163,35 +181,35 @@ def check_defender() -> dict:
         else:
             s["items"].append("Impossible de récupérer le statut — PowerShell non disponible ou droits insuffisants")
             s["status"] = "warn"
-    except Exception as e:
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError, TypeError) as e:
         s["items"].append(f"Erreur : {e}")
         s["status"] = "warn"
     return s
 
 
-def check_windows_updates() -> dict:
+def check_windows_updates(*, detailed: bool = False) -> dict:
     s = section("Mises à jour Windows (dernière vérification)")
     try:
         result = subprocess.run(
             ["powershell", "-Command",
              "(New-Object -ComObject Microsoft.Update.AutoUpdate).Results | Select-Object -Property LastSearchSuccessDate | ConvertTo-Json"],
-            capture_output=True, text=True, timeout=10
+            capture_output=True, text=True, timeout=10, check=False
         )
         if result.returncode == 0 and result.stdout.strip():
             try:
                 data = json.loads(result.stdout)
                 date = data.get("LastSearchSuccessDate", "?")
                 s["items"].append(f"  Dernière recherche MAJ : {date}")
-            except Exception:
+            except (json.JSONDecodeError, AttributeError, TypeError):
                 s["items"].append("  Données MAJ disponibles mais format inattendu")
         else:
             s["items"].append("  Impossible de récupérer les MAJ via COM — vérifier manuellement dans Paramètres > Windows Update")
-    except Exception as e:
+    except (OSError, subprocess.SubprocessError) as e:
         s["items"].append(f"  Erreur : {e}")
     return s
 
 
-def check_network_interfaces() -> dict:
+def check_network_interfaces(*, detailed: bool = False) -> dict:
     s = section("Interfaces réseau actives")
     if not HAS_PSUTIL:
         s["items"].append("psutil non disponible")
@@ -202,25 +220,30 @@ def check_network_interfaces() -> dict:
     for iface, stat in stats.items():
         if stat.isup:
             ips = [a.address for a in addrs.get(iface, []) if ':' not in a.address]
-            ip_str = ', '.join(ips) if ips else 'pas d\'IP v4'
-            s["items"].append(f"  ✅ {iface:<30} | {ip_str}")
+            if detailed:
+                ip_str = ', '.join(ips) if ips else 'pas d\'IP v4'
+                s["items"].append(f"  ✅ {iface:<30} | {ip_str}")
+            else:
+                s["items"].append(f"  ✅ {iface}")
     return s
 
 
-def generate_html_report(sections: list[dict], out_path: str):
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+def generate_html_report(sections: list[dict], out_path: str, *, detailed: bool = False):
+    now = now_local().strftime("%Y-%m-%d %H:%M:%S %z")
     warn_count = sum(1 for s in sections if s["status"] == "warn")
 
     rows = ""
     for sec in sections:
-        color = "#ff6b6b" if sec["status"] == "warn" else "#00d4aa"
+        status_class = "warn" if sec["status"] == "warn" else "ok"
         badge = "⚠️ Attention" if sec["status"] == "warn" else "✅ OK"
-        items_html = "\n".join(f"<li><code>{item}</code></li>" for item in sec["items"])
+        items_html = "\n".join(
+            f"<li><code>{escape(str(item))}</code></li>" for item in sec["items"]
+        )
         rows += f"""
         <div class="card {'warn' if sec['status'] == 'warn' else ''}">
           <div class="card-header">
-            <h2>{sec['title']}</h2>
-            <span class="badge" style="color:{color}">{badge}</span>
+            <h2>{escape(str(sec['title']))}</h2>
+            <span class="badge {status_class}">{badge}</span>
           </div>
           <ul>{items_html}</ul>
         </div>"""
@@ -229,7 +252,7 @@ def generate_html_report(sections: list[dict], out_path: str):
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Nzox Security Audit — {now}</title>
+<title>Nzox Security Audit — {escape(now)}</title>
 <style>
   body {{ font-family: 'Segoe UI', monospace; background: #0a0a0f; color: #e8e8f0; margin: 0; padding: 2rem; }}
   .header {{ border-bottom: 2px solid #6c63ff; padding-bottom: 1rem; margin-bottom: 2rem; }}
@@ -244,6 +267,8 @@ def generate_html_report(sections: list[dict], out_path: str):
   .card-header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }}
   h2 {{ font-size: 1rem; color: #e8e8f0; }}
   .badge {{ font-size: 0.8rem; }}
+  .badge.ok {{ color: #00d4aa; }}
+  .badge.warn {{ color: #ff6b6b; }}
   ul {{ list-style: none; padding: 0; }}
   li {{ margin: 0.3rem 0; }}
   code {{ font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #9090a8; white-space: pre-wrap; }}
@@ -253,7 +278,7 @@ def generate_html_report(sections: list[dict], out_path: str):
 <body>
 <div class="header">
   <h1>🔐 Nzox Security Audit Tool</h1>
-  <p class="meta">Rapport généré le {now} — Machine : {platform.node()}</p>
+  <p class="meta">Rapport généré le {escape(now)} — Mode : {'détaillé' if detailed else 'minimisé'}</p>
 </div>
 <div class="summary">
   <div class="chip ok">✅ {len(sections) - warn_count} sections OK</div>
@@ -269,22 +294,24 @@ def generate_html_report(sections: list[dict], out_path: str):
     print(f"[OK] Rapport HTML -> {out_path}")
 
 
-def generate_md_report(sections: list[dict], out_path: str):
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+def generate_md_report(sections: list[dict], out_path: str, *, detailed: bool = False):
+    now = now_local().strftime("%Y-%m-%d %H:%M:%S %z")
     lines = [
         "# 🔐 Nzox Security Audit Tool",
         f"**Rapport généré le** : {now}  ",
-        f"**Machine** : {platform.node()}",
+        f"**Mode** : {'détaillé' if detailed else 'minimisé'}",
         "",
         "---",
         "",
     ]
     for sec in sections:
         badge = "⚠️" if sec["status"] == "warn" else "✅"
-        lines.append(f"## {badge} {sec['title']}")
+        safe_title = str(sec["title"]).replace("\n", " ")
+        lines.append(f"## {badge} {safe_title}")
         lines.append("")
         for item in sec["items"]:
-            lines.append(f"- `{item}`")
+            safe_item = str(item).replace("`", "ˋ").replace("\n", " ")
+            lines.append(f"- `{safe_item}`")
         lines.append("")
 
     lines.append("---")
@@ -295,7 +322,7 @@ def generate_md_report(sections: list[dict], out_path: str):
     print(f"[OK] Rapport Markdown -> {out_path}")
 
 
-def run_audit(html: bool = True, md: bool = False):
+def run_audit(html: bool = True, md: bool = False, detailed: bool = False):
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     print("\n[NZOX] Security Audit Tool -- demarrage...\n")
 
@@ -318,8 +345,8 @@ def run_audit(html: bool = True, md: bool = False):
     for check in checks:
         print(f"  → {check.__name__.replace('check_', '').replace('_', ' ').title()}...")
         try:
-            sections.append(check())
-        except Exception as e:
+            sections.append(check(detailed=detailed))
+        except Exception as e:  # noqa: BLE001 - une section défaillante ne doit pas arrêter l'audit
             sections.append({
                 "title": check.__name__,
                 "items": [f"Erreur inattendue : {e}"],
@@ -327,14 +354,26 @@ def run_audit(html: bool = True, md: bool = False):
             })
 
     os.makedirs(REPORT_DIR, exist_ok=True)
-    stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    stamp = now_local().strftime("%Y%m%d_%H%M%S")
 
     if html:
-        generate_html_report(sections, os.path.join(REPORT_DIR, f"audit_{stamp}.html"))
+        generate_html_report(
+            sections,
+            os.path.join(REPORT_DIR, f"audit_{stamp}.html"),
+            detailed=detailed,
+        )
     if md:
-        generate_md_report(sections, os.path.join(REPORT_DIR, f"audit_{stamp}.md"))
+        generate_md_report(
+            sections,
+            os.path.join(REPORT_DIR, f"audit_{stamp}.md"),
+            detailed=detailed,
+        )
     if not html and not md:
-        generate_html_report(sections, os.path.join(REPORT_DIR, f"audit_{stamp}.html"))
+        generate_html_report(
+            sections,
+            os.path.join(REPORT_DIR, f"audit_{stamp}.html"),
+            detailed=detailed,
+        )
 
     warn_count = sum(1 for s in sections if s["status"] == "warn")
     print(f"\n{'='*50}")
@@ -344,6 +383,17 @@ def run_audit(html: bool = True, md: bool = False):
 
 
 if __name__ == "__main__":
-    html_flag = "--html" in sys.argv or len(sys.argv) == 1
-    md_flag = "--md" in sys.argv
-    run_audit(html=html_flag, md=md_flag)
+    parser = argparse.ArgumentParser(description="Audit défensif local pour Windows")
+    parser.add_argument("--html", action="store_true", help="générer un rapport HTML")
+    parser.add_argument("--md", action="store_true", help="générer un rapport Markdown")
+    parser.add_argument(
+        "--details",
+        action="store_true",
+        help="inclure les IP, PID, commandes de démarrage et le nom du PC",
+    )
+    args = parser.parse_args()
+    run_audit(
+        html=args.html or not args.md,
+        md=args.md,
+        detailed=args.details,
+    )
