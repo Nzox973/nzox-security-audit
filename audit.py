@@ -65,6 +65,7 @@ def check_disk_space(*, detailed: bool = False) -> dict:
                 s["status"] = "warn"
         except PermissionError:
             s["items"].append(f"⛔ {partition.device} — accès refusé")
+            s["status"] = "warn"
     return s
 
 
@@ -115,6 +116,7 @@ def check_startup_programs(*, detailed: bool = False) -> dict:
                         found.append(entry)
         except (OSError, subprocess.SubprocessError) as e:
             s["items"].append(f"Erreur lecture registre : {e}")
+            s["status"] = "warn"
 
     if found:
         s["items"] = found
@@ -204,8 +206,10 @@ def check_windows_updates(*, detailed: bool = False) -> dict:
                 s["items"].append("  Données MAJ disponibles mais format inattendu")
         else:
             s["items"].append("  Impossible de récupérer les MAJ via COM — vérifier manuellement dans Paramètres > Windows Update")
+            s["status"] = "warn"
     except (OSError, subprocess.SubprocessError) as e:
         s["items"].append(f"  Erreur : {e}")
+        s["status"] = "warn"
     return s
 
 
@@ -213,6 +217,7 @@ def check_network_interfaces(*, detailed: bool = False) -> dict:
     s = section("Interfaces réseau actives")
     if not HAS_PSUTIL:
         s["items"].append("psutil non disponible")
+        s["status"] = "warn"
         return s
 
     stats = psutil.net_if_stats()
@@ -323,7 +328,9 @@ def generate_md_report(sections: list[dict], out_path: str, *, detailed: bool = 
 
 
 def run_audit(html: bool = True, md: bool = False, detailed: bool = False):
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
+    if callable(reconfigure_stdout):
+        reconfigure_stdout(encoding="utf-8", errors="replace")
     print("\n[NZOX] Security Audit Tool -- demarrage...\n")
 
     if not HAS_PSUTIL:

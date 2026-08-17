@@ -93,3 +93,13 @@ def test_default_startup_report_omits_command(monkeypatch):
 
     assert all("secret.exe" not in item for item in minimized["items"])
     assert any("secret.exe" in item for item in detailed["items"])
+
+
+def test_failed_windows_update_check_is_reported_as_warning(monkeypatch):
+    result = SimpleNamespace(returncode=1, stdout="")
+    monkeypatch.setattr(audit.subprocess, "run", lambda *args, **kwargs: result)
+
+    section = audit.check_windows_updates()
+
+    assert section["status"] == "warn"
+    assert any("Impossible" in item for item in section["items"])
