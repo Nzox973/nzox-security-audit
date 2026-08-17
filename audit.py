@@ -106,7 +106,11 @@ def check_startup_programs(*, detailed: bool = False) -> dict:
                 capture_output=True, text=True, timeout=5, check=False
             )
             if result.returncode == 0:
-                lines = [l.strip() for l in result.stdout.splitlines() if l.strip() and "REG_" in l]
+                lines = [
+                    line.strip()
+                    for line in result.stdout.splitlines()
+                    if line.strip() and "REG_" in line
+                ]
                 for line in lines:
                     parts = line.split(None, 2)
                     if len(parts) >= 3:
