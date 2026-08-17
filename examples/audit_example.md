@@ -1,9 +1,10 @@
 # 🔐 Nzox Security Audit Tool
 **Rapport généré le** : 2026-06-14 20:37:02  
-**Machine** : DESKTOP-EXEMPLE
+**Mode** : détaillé — données fictives
 
-> **Rapport anonymisé** — Cet exemple illustre le format de sortie de l'outil.
-> Les données système, noms de processus, adresses IP et ports sont fictifs ou génériques.
+> **Rapport fictif en mode `--details`** — Cet exemple illustre volontairement
+> la sortie la plus détaillée. Les noms, PID, commandes, adresses IP et ports
+> sont inventés. Le mode normal de l’outil masque ces valeurs.
 
 ---
 

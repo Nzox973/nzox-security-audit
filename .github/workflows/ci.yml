@@ -2,19 +2,22 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
+  test:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
+          cache: pip
       - name: Install dependencies
-        run: pip install psutil
-      - name: Syntax check
-        run: python -m py_compile audit.py
+        run: pip install -r requirements-dev.txt
+      - name: Lint
+        run: ruff check audit.py tests
+      - name: Test
+        run: python -m pytest -q
